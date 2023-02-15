@@ -1,0 +1,29 @@
+1. Enter the number of hours it took you to complete the project between
+   the <<< and >>> signs below (eg, <<<10>>>).
+
+    Was not counting. I spent most of the time on multiple attempts working on it and researching through the material provided.
+
+   <<< 10-12 >>>
+   
+2. Enter the difficulty level (1: very easy; 5: very difficult) of the project
+   between the <<< and >>> signs below (eg, <<<3>>>).
+
+   <<<4>>>
+
+3. Did you receive help from anyone? List their names, status (classmate, 
+   CS451/651 grad, TA, other), and the nature of help received.
+
+   Name               Status       Help Received
+   ----               ------       -------------
+
+   ...                ...          ...
+
+4. List any other comments here. Feel free to provide any feedback on how
+   much you learned from doing the assignment, and whether you enjoyed
+   doing it.
+
+   The material covered in the assignment was pretty interesting and helped follow the material covered in the lectures very well.
+   The instructions provided in the assignment helped to deal with the multiple files and the large amount of code present in the
+   j-- library.
+
+   ...
