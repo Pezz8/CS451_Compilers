@@ -17,9 +17,23 @@ enum TokenKind {
     PUBLIC("public"), RETURN("return"), STATIC("static"), SUPER("super"), THIS("this"),
     VOID("void"), WHILE("while"),
 
+    // Project 2 Problem 3
+    BREAK ("break"), CASE ("case"), CATCH ("catch"), CONTINUE ("continue"), DEFAULT ("default"),
+    DO ("do"), DOUBLE ("double"), FINALLY ("finally"), FOR ("for"), IMPLEMENTS ("implements"),
+    INTERFACE ("interface"), LONG ("long"), SWITCH ("switch"), THROW ("throw"), THROWS ("throws"),
+    TRY ("try"),
+
     // Operators.
-    ASSIGN("="), DEC("--"), EQUAL("=="), GT(">"), INC("++"), LAND("&&"), LE("<="), LNOT("!"), ARSHIFT(">>"), ALSHIFT("<<"), LRSHIFT(">>>"),
-    MINUS("-"), PLUS("+"), PLUS_ASSIGN("+="), STAR("*"), DIV("/"), REM("%"), NOT ("~"), OR("|"), XOR("^"), AND ("&"),
+    ASSIGN("="), DEC("--"), EQUAL("=="), GT(">"), INC("++"), LAND("&&"),
+    LE("<="), LNOT("!"), ARSHIFT(">>"), ALSHIFT("<<"), LRSHIFT(">>>"),
+    MINUS("-"), PLUS("+"), PLUS_ASSIGN("+="), STAR("*"), DIV("/"), REM("%"),
+    NOT ("~"), OR("|"), XOR("^"), AND ("&"),
+    // Project 2 Problem 2
+    QUESTION ("?"), COLON (":"), NOT_EQUAL ("!="), DIV_ASSIGN ("/="), MINUS_ASSIGN ("-="),
+    STAR_ASSIGN ("*="), REM_ASSIGN("%="), ARSHIFT_ASSIGN (">>="), LRSHIFT_ASSIGN (">>>="),
+    ALSHIFT_ASSIGN ("<<="), LT ("<"), GE (">="), XOR_ASSIGN ("^="), OR_ASSIGN ("|="), LOR ("||"),
+    AND_ASSIGN("&="),
+
 
     // Separators.
     COMMA(","), DOT("."), LBRACK("["), LCURLY("{"), LPAREN("("), RBRACK("]"), RCURLY("}"),
@@ -30,7 +44,9 @@ enum TokenKind {
 
     // Literals.
     CHAR_LITERAL("<CHAR_LITERAL>"), FALSE("false"), INT_LITERAL("<INT_LITERAL>"), NULL("null"),
-    STRING_LITERAL("<STRING_LITERAL>"), TRUE("true");
+    STRING_LITERAL("<STRING_LITERAL>"), TRUE("true"),
+    // Project 2 problem 4
+    LONG_LITERAL("<LONG_LITERAL>"), DOUBLE_LITERAL("<DOUBLE_LITERAL>");
 
     // The token kind's string representation.
     private String image;
