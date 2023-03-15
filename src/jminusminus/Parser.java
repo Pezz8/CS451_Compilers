@@ -555,7 +555,7 @@ public class Parser {
      * Parses and returns a basic type.
      *
      * <pre>
-     *   basicType ::= BOOLEAN | CHAR | INT
+     *   basicType ::= BOOLEAN | CHAR | INT | DOUBLE | LONG
      * </pre>
      *
      * @return a basic type.
@@ -567,6 +567,10 @@ public class Parser {
             return Type.CHAR;
         } else if (have(INT)) {
             return Type.INT;
+        } else if (have(DOUBLE)) {
+            return Type.DOUBLE;
+        } else if (have(LONG)){
+            return Type.LONG;
         } else {
             reportParserError("Type sought where %s found", scanner.token().image());
             return Type.ANY;
@@ -1147,6 +1151,10 @@ public class Parser {
             return new JLiteralString(line, scanner.previousToken().image());
         } else if (have(TRUE)) {
             return new JLiteralBoolean(line, scanner.previousToken().image());
+        } else if (have(LONG_LITERAL)) {
+            return new JLiteralLong(line, scanner.previousToken().image());
+        } else if (have(DOUBLE_LITERAL)){
+            return new JLiteralDouble(line, scanner.previousToken().image());
         } else {
             reportParserError("Literal sought where %s found", scanner.token().image());
             return new JWildExpression(line);
@@ -1304,17 +1312,19 @@ public class Parser {
     }
 
     // Returns true if we are looking at a basic type, and false otherwise.
+    // Project 3 Problem 1
     private boolean seeBasicType() {
-        return (see(BOOLEAN) || see(CHAR) || see(INT));
+        return (see(BOOLEAN) || see(CHAR) || see(INT) || see(DOUBLE) || see(LONG));
     }
 
     // Returns true if we are looking at a reference type, and false otherwise.
+    // Project 3 Problem 1
     private boolean seeReferenceType() {
         if (see(IDENTIFIER)) {
             return true;
         } else {
             scanner.recordPosition();
-            if (have(BOOLEAN) || have(CHAR) || have(INT)) {
+            if (have(BOOLEAN) || have(CHAR) || have(INT) || have(DOUBLE) || have(LONG)) {
                 if (have(LBRACK) && see(RBRACK)) {
                     scanner.returnToPosition();
                     return true;
