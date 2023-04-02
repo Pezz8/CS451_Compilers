@@ -29,10 +29,11 @@ enum TokenKind {
     MINUS("-"), PLUS("+"), PLUS_ASSIGN("+="), STAR("*"), DIV("/"), REM("%"),
     NOT ("~"), OR("|"), XOR("^"), AND ("&"),
     // Project 2 Problem 2
-    QUESTION ("?"), COLON (":"), NOT_EQUAL ("!="), DIV_ASSIGN ("/="), MINUS_ASSIGN ("-="),
+    QUESTION ("?") /*done*/, COLON (":") /*done*/, NOT_EQUAL ("!=") /*done*/, DIV_ASSIGN ("/="), MINUS_ASSIGN ("-="),
     STAR_ASSIGN ("*="), REM_ASSIGN("%="), ARSHIFT_ASSIGN (">>="), LRSHIFT_ASSIGN (">>>="),
-    ALSHIFT_ASSIGN ("<<="), LT ("<"), GE (">="), XOR_ASSIGN ("^="), OR_ASSIGN ("|="), LOR ("||"),
-    AND_ASSIGN("&="),
+    ALSHIFT_ASSIGN ("<<="), AND_ASSIGN("&="), XOR_ASSIGN ("^="), OR_ASSIGN ("|=") /*all the assign done*/,
+    LT ("<") /*done*/, GE (">=") /*done*/, LOR ("||") /*done*/,
+
 
 
     // Separators.

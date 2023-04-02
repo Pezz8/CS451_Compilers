@@ -317,6 +317,52 @@ public class Parser {
         }
     }
 
+    // Project 3 Problem 8
+    /**
+     * Parses a switch statement label and returns an AST for it.
+     *
+     * <pre>
+     *        switchLabel ::= CASE expression COLON
+     *                       | DEFLT COLON
+     * </pre>
+     *
+     * @return an AST for a switch statement label.
+     */
+    private JExpression switchLabel() {
+        if(have(CASE)){
+            JExpression label = expression();
+            mustBe(COLON);
+            return label;
+        } else {
+            mustBe(DEFAULT);
+            mustBe(COLON);
+            return null;
+        }
+    }
+
+    // Project 3 Problem 8
+    /**
+     * Parses a switch statement label and returns an AST for it.
+     *
+     * <pre>
+     *    switchBlockStatementGroup ::= switchLabel { switchLabel } { block Statement }
+     * </pre>
+     *
+     * @return an AST for a switch statement label.
+     */
+    private JSwitchBlockStatement switchBlockStatementGroup() {
+        int line = scanner.token().line();
+        ArrayList<JExpression> labels = new ArrayList<>();
+        ArrayList<JStatement> blockStatements = new ArrayList<>();
+        labels.add(switchLabel());
+        while (see(CASE) || see(DEFAULT)) labels.add(switchLabel());
+        while ((!see(CASE)) && (!see(DEFAULT) && (!see(RCURLY)))) blockStatements.add(blockStatement());
+        return new JSwitchBlockStatement(line, labels, blockStatements);
+    }
+
+
+
+    // Project 3 Problem 4
     /**
      * Parses a statement and returns an AST for it.
      *
@@ -327,6 +373,20 @@ public class Parser {
      *               | SEMI
      *               | WHILE parExpression statement
      *               | statementExpression SEMI
+     *
+     *               statement ::= block
+     *                            | BREAK SEMI
+     *                            | CONTINUE SEMI
+     *                            | DO statement WHILE parExpression SEMI
+     *                            | FOR LPAREN [ forInit ] SEMI [ expression ] SEMI [ forUpdate ] RPAREN statement
+     *                            | IF parExpression statement [ ELSE statement ]
+     *                            | RETURN [ expression ] SEMI
+     *                            | SEMI
+     *                            | SWITCH parExpression LCURLY {switchBlockStatementGroup} RCURLY
+     *                            | THROW expression SEMI
+     *                            | TRY block { CATCH LPAREN formalParameter RPAREN block } [ FINALLY block ]
+     *                            | WHILE parExpression statement
+     *                            | statementExpression SEMI
      * </pre>
      *
      * @return an AST for a statement.
@@ -350,7 +410,59 @@ public class Parser {
             }
         } else if (have(SEMI)) {
             return new JEmptyStatement(line);
-        } else if (have(WHILE)) {
+        }
+        // Project 3 Problem 4
+        else if (have(DO)) {
+            JStatement statement = statement();
+            mustBe(WHILE);
+            JExpression parExpression = parExpression();
+            mustBe(SEMI);
+            return new JDoStatement(line, statement, parExpression);
+        }
+        // Project 3 Problem 5
+        else if (have(FOR)) {
+            ArrayList<JStatement> forInit = new ArrayList<>();
+            ArrayList<JStatement> forUpdate = new ArrayList<>();
+            JExpression condition = null;
+            JStatement body;
+            mustBe(LPAREN);
+            if (!see(SEMI)) forInit(line);
+            mustBe(SEMI);
+            if (!see(SEMI)) condition = expression();
+            mustBe(SEMI);
+            if (!see(RPAREN)) forUpdate = forUpdate(line);
+            mustBe(RPAREN);
+            body = statement();
+            return new JForStatement(line, forInit, condition, forUpdate, body);
+        }
+        // Project 3 Problem 6
+        else if (have(BREAK)) {
+            mustBe(SEMI);
+            return new JBreakStatement(line);
+        }
+        // Project 3 Problem 7
+        else if (have(CONTINUE)) {
+            mustBe(SEMI);
+            return new JContinueStatement(line);
+        }
+        // Project 3 Problem 8
+//        else if (have(SWITCH)) {
+//            ArrayList<JSwitchBlockStatement> switchBlockStatementGroup = new ArrayList<>();
+//            JExpression parExpression = parExpression();
+//            mustBe(LCURLY);
+//            while (!see(RCURLY) && !see(EOF)) {
+//                switchBlockStatementGroup.add(switchBlockStatementGroup());
+//            }
+//            mustBe(RCURLY);
+//            return new JSwitchStatement(line, parExpression, switchBlockStatementGroup);
+//        }
+        // Project 3 Problem 9
+        else if (have(THROW)){
+            JExpression expression = expression();
+            mustBe(SEMI);
+            return new JThrowStatement(line, expression);
+        }
+        else if (have(WHILE)) {
             JExpression test = parExpression();
             JStatement statement = statement();
             return new JWhileStatement(line, test, statement);
@@ -401,6 +513,7 @@ public class Parser {
         return new JFormalParameter(line, name, type);
     }
 
+
     /**
      * Parses a parenthesized expression and returns an AST for it.
      *
@@ -415,6 +528,44 @@ public class Parser {
         JExpression expr = expression();
         mustBe(RPAREN);
         return expr;
+    }
+    // Project 3 Problem 5
+    /**
+     *
+     *
+     * <pre>
+     *   forInit ::= statementExpression { COMMA statementExpression}
+     *          | type variableDeclarators
+     * </pre>
+     *
+     * @return an ArrayList of formal parameters.
+     */
+    private ArrayList<JStatement> forInit(int line) {
+        ArrayList<JStatement> init = new ArrayList<>();
+        if(seeBasicType() || seeReferenceType()) {
+            Type type = null;
+            init.add(new JVariableDeclaration(line, variableDeclarators(type())));
+        } else {
+            init.add(statementExpression());
+            while (have(COMMA)) init.add(statementExpression());
+        }
+        return init;
+    }
+    // Project 3 Problem 5
+    /**
+     *
+     *
+     * <pre>
+     *      forUpdate ::= statementExpression { COMMA statementExpression }
+     * </pre>
+     *
+     * @return an ArrayList of formal parameters.
+     */
+    private ArrayList<JStatement> forUpdate(int line) {
+        ArrayList<JStatement> update = new ArrayList<>();
+        update.add(statementExpression());
+        while(have(COMMA)) update.add(statementExpression());
+        return update;
     }
 
     /**
@@ -569,7 +720,7 @@ public class Parser {
             return Type.INT;
         } else if (have(DOUBLE)) {
             return Type.DOUBLE;
-        } else if (have(LONG)){
+        } else if (have(LONG)) {
             return Type.LONG;
         } else {
             reportParserError("Type sought where %s found", scanner.token().image());
@@ -646,23 +797,48 @@ public class Parser {
         return assignmentExpression();
     }
 
+    // Project 3 Problem 2
+
     /**
      * Parses an assignment expression and returns an AST for it.
      *
      * <pre>
-     *   assignmentExpression ::= conditionalAndExpression
-     *                                [ ( ASSIGN | PLUS_ASSIGN ) assignmentExpression ]
+     *
+     *   assignmentExpression ::= conditionalExpression
+     *                              [ ( ALSHIFT_ASSIGN | AND_ASSIGN | ARSHIFT_ASSIGN | ASSIGN | DIV_ASSIGN
+     *                                  | LRSHIFT_ASSIGN | MINUS_ASSIGN | OR_ASSIGN | PLUS_ASSIGN | REM_ASSIGN
+     *                                  | STAR_ASSIGN | XOR_ASSIGN ) assignmentExpression ]
      * </pre>
      *
      * @return an AST for an assignment expression.
      */
     private JExpression assignmentExpression() {
         int line = scanner.token().line();
-        JExpression lhs = conditionalAndExpression();
+        JExpression lhs = conditionalExpression();
         if (have(ASSIGN)) {
             return new JAssignOp(line, lhs, assignmentExpression());
+        } else if (have(ALSHIFT_ASSIGN)) {
+            return new JALeftShiftAssignOp(line, lhs, assignmentExpression());
+        } else if (have(AND_ASSIGN)) {
+            return new JAndAssignOp(line, lhs, assignmentExpression());
+        } else if (have(ARSHIFT_ASSIGN)) {
+            return new JARightShiftAssignOp(line, lhs, assignmentExpression());
+        } else if (have(DIV_ASSIGN)) {
+            return new JDivAssignOp(line, lhs, assignmentExpression());
+        } else if (have(LRSHIFT_ASSIGN)) {
+            return new JLRightShiftAssignOp(line, lhs, assignmentExpression());
+        } else if (have(OR_ASSIGN)) {
+            return new JOrAssignOp(line, lhs, assignmentExpression());
         } else if (have(PLUS_ASSIGN)) {
             return new JPlusAssignOp(line, lhs, assignmentExpression());
+        } else if (have(MINUS_ASSIGN)) {
+            return new JMinusAssignOp(line, lhs, assignmentExpression());
+        }else if (have(REM_ASSIGN)) {
+            return new JRemAssignOp(line, lhs, assignmentExpression());
+        } else if (have(STAR_ASSIGN)) {
+            return new JStarAssignOp(line, lhs, assignmentExpression());
+        } else if (have(XOR_ASSIGN)) {
+            return new JXorAssignOp(line, lhs, assignmentExpression());
         } else {
             return lhs;
         }
@@ -687,6 +863,53 @@ public class Parser {
             } else {
                 more = false;
             }
+        }
+        return lhs;
+    }
+
+    // Project 3 Problem 2
+
+    /**
+     * Parses a conditional-or expression and returns an AST for it.
+     *
+     * <pre>
+     *   conditionalOrExpression ::= conditionalAndExpression {LOR conditionalAndExpression}
+     * </pre>
+     *
+     * @return an AST for a conditional-and expression.
+     */
+    private JExpression conditionalOrExpression() {
+        int line = scanner.token().line();
+        boolean more = true;
+        JExpression lhs = conditionalAndExpression();
+        while (more) {
+            if (have(LOR)) {
+                lhs = new JLogicalOrOp(line, lhs, conditionalAndExpression());
+            } else {
+                more = false;
+            }
+        }
+        return lhs;
+    }
+    // Project 3 Problem 3
+
+    /**
+     * Parses a conditional expression and returns an AST for it.
+     *
+     * <pre>
+     *   conditionalExpression ::= conditionalOrExpression [ QUESTION expression COLON conditionalExpression]
+     * </pre>
+     *
+     * @return an AST for a conditional expression.
+     */
+    private JExpression conditionalExpression() {
+        int line = scanner.token().line();
+        boolean more = true;
+        JExpression lhs = conditionalOrExpression();
+        if (have(QUESTION)) {
+            JExpression trueCondition = expression();
+            mustBe(COLON);
+            lhs = new JConditionalExpression(line, lhs, trueCondition, conditionalExpression());
         }
         return lhs;
     }
@@ -781,18 +1004,19 @@ public class Parser {
             } else if (have(LRSHIFT)) {
                 lhs = new JLRightShiftOp(line, lhs, additiveExpression());
             } else {
-                    more = false;
+                more = false;
             }
         }
         return lhs;
     }
 
+    // Project 3 Problem 2
 
     /**
      * Parses an equality expression and returns an AST for it.
      *
      * <pre>
-     *   equalityExpression ::= relationalExpression { EQUAL relationalExpression }
+     *   equalityExpression ::= relationalExpression { EQUAL || NOT_EQUAL relationalExpression }
      * </pre>
      *
      * @return an AST for an equality expression.
@@ -804,6 +1028,8 @@ public class Parser {
         while (more) {
             if (have(EQUAL)) {
                 lhs = new JEqualOp(line, lhs, relationalExpression());
+            } else if (have(NOT_EQUAL)) {
+                lhs = new JNotEqualOp(line, lhs, relationalExpression());
             } else {
                 more = false;
             }
@@ -811,12 +1037,13 @@ public class Parser {
         return lhs;
     }
 
+    // Project 3 Problem 2
+
     /**
      * Parses a relational expression and returns an AST for it.
      *
      * <pre>
-     *   relationalExpression ::= shiftExpression [ ( GT | LE ) additiveExpression
-     *                                               | INSTANCEOF referenceType ]
+     *   relationalExpression ::= shiftExpression [ ( GE | GT | LE | LT ) shiftExpression | INSTANCEOF referenceType ]
      * </pre>
      *
      * @return an AST for a relational expression.
@@ -828,6 +1055,10 @@ public class Parser {
             return new JGreaterThanOp(line, lhs, shiftExpression());
         } else if (have(LE)) {
             return new JLessEqualOp(line, lhs, shiftExpression());
+        } else if (have(LT)) {
+            return new JLessThanOp(line, lhs, shiftExpression());
+        } else if (have(GE)) {
+            return new JGreaterEqualOp(line, lhs, shiftExpression());
         } else if (have(INSTANCEOF)) {
             return new JInstanceOfOp(line, lhs, referenceType());
         } else {
@@ -877,13 +1108,11 @@ public class Parser {
         while (more) {
             if (have(STAR)) {
                 lhs = new JMultiplyOp(line, lhs, unaryExpression());
-            }
-            else if(have(DIV)){
+            } else if (have(DIV)) {
                 lhs = new JDivideOp(line, lhs, unaryExpression());
-            }
-            else if(have(REM)){
+            } else if (have(REM)) {
                 lhs = new JRemainderOp(line, lhs, unaryExpression());
-            }else {
+            } else {
                 more = false;
             }
         }
@@ -905,7 +1134,9 @@ public class Parser {
         int line = scanner.token().line();
         if (have(INC)) {
             return new JPreIncrementOp(line, unaryExpression());
-        } else if (have(MINUS)) {
+        } else if (have(DEC)){
+            return new JPreDecrementOp(line, unaryExpression());
+        }else if (have(MINUS)) {
             return new JNegateOp(line, unaryExpression());
         } else if (have(PLUS)) {
             return new JUnaryPlusOp(line, unaryExpression());
@@ -930,9 +1161,9 @@ public class Parser {
         int line = scanner.token().line();
         if (have(LNOT)) {
             return new JLogicalNotOp(line, unaryExpression());
-        } else if(have(NOT)) {
+        } else if (have(NOT)) {
             return new JComplementOp(line, unaryExpression());
-        }else if (seeCast()) {
+        } else if (seeCast()) {
             mustBe(LPAREN);
             boolean isBasicType = seeBasicType();
             Type type = type();
@@ -944,11 +1175,13 @@ public class Parser {
         }
     }
 
+    // Project 3 Problem 2
+
     /**
      * Parses a postfix expression and returns an AST for it.
      *
      * <pre>
-     *   postfixExpression ::= primary { selector } { DEC }
+     *   postfixExpression ::= primary { selector } { DEC | INC}
      * </pre>
      *
      * @return an AST for a postfix expression.
@@ -961,6 +1194,9 @@ public class Parser {
         }
         while (have(DEC)) {
             primaryExpr = new JPostDecrementOp(line, primaryExpr);
+        }
+        while (have(INC)) {
+            primaryExpr = new JPostIncrementOp(line, primaryExpr);
         }
         return primaryExpr;
     }
@@ -1153,7 +1389,7 @@ public class Parser {
             return new JLiteralBoolean(line, scanner.previousToken().image());
         } else if (have(LONG_LITERAL)) {
             return new JLiteralLong(line, scanner.previousToken().image());
-        } else if (have(DOUBLE_LITERAL)){
+        } else if (have(DOUBLE_LITERAL)) {
             return new JLiteralDouble(line, scanner.previousToken().image());
         } else {
             reportParserError("Literal sought where %s found", scanner.token().image());
@@ -1341,5 +1577,54 @@ public class Parser {
         boolean result = have(LBRACK) && see(RBRACK);
         scanner.returnToPosition();
         return result;
+    }
+}
+
+/**
+ * A switch statement group consists of case labels and a block of statements.
+ */
+class JSwitchBlockStatement extends JAST {
+
+    private ArrayList<JExpression> switchLabels;
+    private ArrayList<JStatement> blockStatements;
+
+    public JSwitchBlockStatement(int line, ArrayList<JExpression> switchLabels, ArrayList<JStatement> blockStatements) {
+        super(line);
+        this.switchLabels = switchLabels;
+        this.blockStatements = blockStatements;
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    public JAST analyze(Context context) {
+        return this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void codegen(CLEmitter output) {
+
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void toJSON(JSONElement json) {
+
+        for (JExpression label : switchLabels) {
+            JSONElement e = new JSONElement();
+            if (label == null) {
+                json.addChild("Default", e);
+            } else {
+                json.addChild("Case", e);
+                label.toJSON(e);
+            }
+        }
+        blockStatements.forEach(block -> {
+            block.toJSON(json);
+        });
     }
 }

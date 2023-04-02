@@ -14,7 +14,7 @@ public class JSwitchStatement extends JStatement {
     private JExpression condition;
 
     // List of switch-statement groups.
-    private ArrayList<SwitchStatementGroup> stmtGroup;
+    private ArrayList<JSwitchBlockStatement> stmtGroup;
 
     /**
      * Constructs an AST node for a switch-statement.
@@ -24,7 +24,7 @@ public class JSwitchStatement extends JStatement {
      * @param stmtGroup list of statement groups.
      */
     public JSwitchStatement(int line, JExpression condition,
-                            ArrayList<SwitchStatementGroup> stmtGroup) {
+                            ArrayList<JSwitchBlockStatement> stmtGroup) {
         super(line);
         this.condition = condition;
         this.stmtGroup = stmtGroup;
@@ -54,11 +54,60 @@ public class JSwitchStatement extends JStatement {
         JSONElement e1 = new JSONElement();
         e.addChild("Condition", e1);
         condition.toJSON(e1);
-        for (SwitchStatementGroup group : stmtGroup) {
+        for (JSwitchBlockStatement group : stmtGroup) {
             group.toJSON(e);
         }
     }
 }
+
+/**
+ * A switch statement group consists of case labels and a block of statements.
+ */
+//class JSwitchBlockStatement extends JAST {
+//
+//    private ArrayList<JExpression> switchLabels;
+//    private ArrayList<JStatement> blockStatements;
+//
+//    public JSwitchBlockStatement(int line, ArrayList<JExpression> switchLabels, ArrayList<JStatement> blockStatements) {
+//        super(line);
+//        this.switchLabels = switchLabels;
+//        this.blockStatements = blockStatements;
+//    }
+//
+//
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public JAST analyze(Context context) {
+//        return this;
+//    }
+//
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public void codegen(CLEmitter output) {
+//
+//    }
+//
+//    /**
+//     * {@inheritDoc}
+//     */
+//    public void toJSON(JSONElement json) {
+//
+//        for (JExpression label : switchLabels) {
+//            JSONElement e = new JSONElement();
+//            if (label == null) {
+//                json.addChild("Default", e);
+//            } else {
+//                json.addChild("Case", e);
+//                label.toJSON(e);
+//            }
+//        }
+//        blockStatements.forEach(block -> {
+//            block.toJSON(json);
+//        });
+//    }
+//}
 
 /**
  * A switch statement group consists of case labels and a block of statements.
