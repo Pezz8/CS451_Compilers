@@ -40,6 +40,9 @@ class JClassDeclaration extends JAST implements JTypeDecl {
     // Static (class) fields of this class.
     private ArrayList<JFieldDeclaration> staticFieldInitializations;
 
+    // List of interfaces
+    private ArrayList<Type> interfaces;
+
     /**
      * Constructs an AST node for a class declaration.
      *
@@ -47,20 +50,41 @@ class JClassDeclaration extends JAST implements JTypeDecl {
      * @param mods            class modifiers.
      * @param name            class name.
      * @param superType       super class type.
-     * @param superInterfaces implemented interfaces.
      * @param classBlock      class block.
      */
-    public JClassDeclaration(int line, ArrayList<String> mods, String name, Type superType,
-                             ArrayList<TypeName> superInterfaces, ArrayList<JMember> classBlock) {
+    public JClassDeclaration(int line, ArrayList<String> mods, String name, Type superType, ArrayList<JMember> classBlock) {
         super(line);
         this.mods = mods;
         this.name = name;
         this.superType = superType;
-        this.superInterfaces = superInterfaces;
         this.classBlock = classBlock;
         hasExplicitConstructor = false;
         instanceFieldInitializations = new ArrayList<JFieldDeclaration>();
         staticFieldInitializations = new ArrayList<JFieldDeclaration>();
+    }
+
+
+    /**
+     * Constructs an AST node for a class declaration.
+     *
+     * @param line       line in which the class declaration occurs in the source file.
+     * @param mods       class modifiers.
+     * @param name       class name.
+     * @param superType  super class type.
+     * @param classBlock class block.
+     * @param interfaces list of implemented interfaces
+     */
+    public JClassDeclaration(int line, ArrayList<String> mods, String name, Type superType, ArrayList<Type> interfaces,
+                             ArrayList<JMember> classBlock) {
+        super(line);
+        this.mods = mods;
+        this.name = name;
+        this.superType = superType;
+        this.classBlock = classBlock;
+        this.interfaces = interfaces;
+        hasExplicitConstructor = false;
+        instanceFieldInitializations = new ArrayList<>();
+        staticFieldInitializations = new ArrayList<>();
     }
 
     /**

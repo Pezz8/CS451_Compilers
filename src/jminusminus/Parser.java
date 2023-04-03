@@ -104,14 +104,15 @@ public class Parser {
      * Parses a type declaration and returns an AST for it.
      *
      * <pre>
-     *   typeDeclaration ::= modifiers classDeclaration
+     *   typeDeclaration ::= modifiers [classDeclaration | interfaceDeclaration]
      * </pre>
      *
      * @return an AST for a type declaration.
      */
     private JAST typeDeclaration() {
         ArrayList<String> mods = modifiers();
-        return classDeclaration(mods);
+        if (see(CLASS)) return classDeclaration(mods);
+        else return interfaceDeclaration(mods);
     }
 
     /**
@@ -188,7 +189,8 @@ public class Parser {
      * Parses a class declaration and returns an AST for it.
      *
      * <pre>
-     *   classDeclaration ::= CLASS IDENTIFIER [ EXTENDS qualifiedIdentifier ] classBody
+     *   classDeclaration ::= CLASS IDENTIFIER [ EXTENDS qualifiedIdentifier ]
+     *                                          [ IMPLEMENTS qualifiedIdentifier {COMMA qualifiedIdentifier} ] classBody
      * </pre>
      *
      * @param mods the class modifiers.
@@ -200,13 +202,47 @@ public class Parser {
         mustBe(IDENTIFIER);
         String name = scanner.previousToken().image();
         Type superClass;
+        ArrayList<Type> interfaces = new ArrayList<>();
         if (have(EXTENDS)) {
             superClass = qualifiedIdentifier();
         } else {
             superClass = Type.OBJECT;
         }
+        if (have(IMPLEMENTS)) {
+            do {
+                interfaces.add(qualifiedIdentifier());
+            } while (have(COMMA));
+            return new JClassDeclaration(line, mods, name, superClass, interfaces, classBody());
+        }
         return new JClassDeclaration(line, mods, name, superClass, null, classBody());
     }
+
+    /**
+     * Parses a class declaration and returns an AST for it.
+     *
+     * <pre>
+     *   classDeclaration ::= INTERFACE IDENTIFIER
+     *                            [ EXTENDS qualifiedIdentifier { COMMA qualifiedIdentifier } ]
+     *                                interfaceBody
+     * </pre>
+     *
+     * @param mods the class modifiers.
+     * @return an AST for a class declaration.
+     */
+    private JInterfaceDeclaration interfaceDeclaration(ArrayList<String> mods) {
+        int line = scanner.token().line();
+        mustBe(INTERFACE);
+        mustBe(IDENTIFIER);
+        String name = scanner.previousToken().image();
+        ArrayList<TypeName> superClasses = new ArrayList<>();
+        if (have(EXTENDS)) {
+            do {
+                superClasses.add(qualifiedIdentifier());
+            } while (have(COMMA));
+        }
+        return new JInterfaceDeclaration(line, mods, name, superClasses, interfaceBody());
+    }
+
 
     /**
      * Parses a class body and returns a list of members in the body.
@@ -229,11 +265,36 @@ public class Parser {
     }
 
     /**
+     * Parses an interface body and returns a list of members in the body.
+     *
+     * <pre>
+     *   classBody ::= LCURLY { modifiers interfaceMemberDecl } RCURLY
+     * </pre>
+     *
+     * @return a list of members in the class body.
+     */
+    private ArrayList<JMember> interfaceBody() {
+        ArrayList<JMember> members = new ArrayList<JMember>();
+        mustBe(LCURLY);
+        while (!see(RCURLY) && !see(EOF)) {
+            ArrayList<String> mods = modifiers();
+            members.add(memberDecl(mods));
+        }
+        mustBe(RCURLY);
+        return members;
+    }
+
+
+    /**
      * Parses a member declaration and returns an AST for it.
      *
      * <pre>
-     *   memberDecl ::= IDENTIFIER formalParameters block
-     *                | ( VOID | type ) IDENTIFIER formalParameters ( block | SEMI )
+     *   memberDecl ::= IDENTIFIER formalParameters
+     *                      [ THROWS qualifiedIdentifier { COMMA qualifiedIdentifier } ]
+     *                      block
+     *                | ( VOID | type ) IDENTIFIER formalParameters
+     *                      [ THROWS qualifiedIdentifier { COMMA qualifiedIdentifier } ]
+     *                      ( block | SEMI )
      *                | type variableDeclarators SEMI
      * </pre>
      *
@@ -248,8 +309,15 @@ public class Parser {
             mustBe(IDENTIFIER);
             String name = scanner.previousToken().image();
             ArrayList<JFormalParameter> params = formalParameters();
-            JBlock body = block();
-            memberDecl = new JConstructorDeclaration(line, mods, name, params, null, body);
+            ArrayList<TypeName> exceptions;
+            if (have(THROWS)){
+                exceptions = new ArrayList<TypeName>();
+                exceptions.add(qualifiedIdentifier());
+                while (have(COMMA)) exceptions.add(qualifiedIdentifier());
+                memberDecl = new JConstructorDeclaration(line, mods, name, params, exceptions, block());
+            } else {
+                memberDecl = new JConstructorDeclaration(line, mods, name, params, null, block());
+            }
         } else {
             Type type = null;
             if (have(VOID)) {
@@ -258,8 +326,15 @@ public class Parser {
                 mustBe(IDENTIFIER);
                 String name = scanner.previousToken().image();
                 ArrayList<JFormalParameter> params = formalParameters();
-                JBlock body = have(SEMI) ? null : block();
-                memberDecl = new JMethodDeclaration(line, mods, name, type, params, null, body);
+                ArrayList<TypeName> exceptions;
+                if (have(THROWS)) {
+                    exceptions = new ArrayList<>();
+                    exceptions.add(qualifiedIdentifier());
+                    while (have(COMMA)) exceptions.add(qualifiedIdentifier());
+                    memberDecl = new JMethodDeclaration(line, mods, name, type, params, exceptions, have(SEMI) ? null : block());
+                } else {
+                    memberDecl = new JMethodDeclaration(line, mods, name, type, params, null, have(SEMI) ? null : block());
+                }
             } else {
                 type = type();
                 if (seeIdentLParen()) {
@@ -267,10 +342,17 @@ public class Parser {
                     mustBe(IDENTIFIER);
                     String name = scanner.previousToken().image();
                     ArrayList<JFormalParameter> params = formalParameters();
-                    JBlock body = have(SEMI) ? null : block();
-                    memberDecl = new JMethodDeclaration(line, mods, name, type, params, null, body);
+                    ArrayList<TypeName> exceptions;
+                    if (have(THROWS)) {
+                        exceptions = new ArrayList<>();
+                        exceptions.add(qualifiedIdentifier());
+                        while(have(COMMA))
+                            exceptions.add(qualifiedIdentifier());
+                        memberDecl = new JMethodDeclaration(line, mods, name, type, params, exceptions, have(SEMI) ? null : block());
+                    } else
+                        memberDecl = new JMethodDeclaration(line, mods, name, type, params, null, have(SEMI) ? null : block());
                 } else {
-                    // A field.
+                    // A field
                     memberDecl = new JFieldDeclaration(line, mods, variableDeclarators(type));
                     mustBe(SEMI);
                 }
@@ -278,6 +360,7 @@ public class Parser {
         }
         return memberDecl;
     }
+
 
     /**
      * Parses a block and returns an AST for it.
@@ -359,8 +442,6 @@ public class Parser {
         while ((!see(CASE)) && (!see(DEFAULT) && (!see(RCURLY)))) blockStatements.add(blockStatement());
         return new JSwitchBlockStatement(line, labels, blockStatements);
     }
-
-
 
     // Project 3 Problem 4
     /**
@@ -446,16 +527,42 @@ public class Parser {
             return new JContinueStatement(line);
         }
         // Project 3 Problem 8
-//        else if (have(SWITCH)) {
-//            ArrayList<JSwitchBlockStatement> switchBlockStatementGroup = new ArrayList<>();
-//            JExpression parExpression = parExpression();
-//            mustBe(LCURLY);
-//            while (!see(RCURLY) && !see(EOF)) {
-//                switchBlockStatementGroup.add(switchBlockStatementGroup());
-//            }
-//            mustBe(RCURLY);
-//            return new JSwitchStatement(line, parExpression, switchBlockStatementGroup);
-//        }
+        else if (have(SWITCH)) {
+            ArrayList<JSwitchBlockStatement> switchBlockStatementGroup = new ArrayList<>();
+            JExpression parExpression = parExpression();
+            mustBe(LCURLY);
+            while (!see(RCURLY) && !see(EOF)) {
+                switchBlockStatementGroup.add(switchBlockStatementGroup());
+            }
+            mustBe(RCURLY);
+            return new JSwitchStatement(line, parExpression, switchBlockStatementGroup);
+        }
+        // Project 3 Problem 9
+        else if (have(TRY)) {
+        JBlock tryBlock = block();
+        if (see(CATCH)) {
+            ArrayList<JFormalParameter> parameters = new ArrayList<>();
+            ArrayList<JBlock> catchBlocks = new ArrayList<>();
+            while (have(CATCH)) {
+                mustBe(LPAREN);
+                JFormalParameter parameter = formalParameter();
+                parameters.add(parameter);
+                mustBe(RPAREN);
+                JBlock block = block();
+                catchBlocks.add(block);
+            }
+            if (have(FINALLY)) {
+                JBlock finallyBlock = block();
+                return new JTryStatement(line, tryBlock, parameters, catchBlocks, finallyBlock);
+            } else {
+                return new JTryStatement(line, tryBlock, parameters, catchBlocks, null);
+            }
+        } else {
+            mustBe(FINALLY);
+            JBlock finallyBlock = block();
+            return new JTryStatement(line, tryBlock, null, null, finallyBlock);
+        }
+    }
         // Project 3 Problem 9
         else if (have(THROW)){
             JExpression expression = expression();
@@ -473,6 +580,7 @@ public class Parser {
             return statement;
         }
     }
+
 
     /**
      * Parses and returns a list of formal parameters.
