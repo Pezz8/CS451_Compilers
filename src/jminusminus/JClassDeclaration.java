@@ -41,7 +41,7 @@ class JClassDeclaration extends JAST implements JTypeDecl {
     private ArrayList<JFieldDeclaration> staticFieldInitializations;
 
     // List of interfaces
-    private ArrayList<Type> interfaces;
+    //private ArrayList<Type> interfaces;
 
     /**
      * Constructs an AST node for a class declaration.
@@ -74,14 +74,14 @@ class JClassDeclaration extends JAST implements JTypeDecl {
      * @param classBlock class block.
      * @param interfaces list of implemented interfaces
      */
-    public JClassDeclaration(int line, ArrayList<String> mods, String name, Type superType, ArrayList<Type> interfaces,
+    public JClassDeclaration(int line, ArrayList<String> mods, String name, Type superType, ArrayList<TypeName> interfaces,
                              ArrayList<JMember> classBlock) {
         super(line);
         this.mods = mods;
         this.name = name;
         this.superType = superType;
         this.classBlock = classBlock;
-        this.interfaces = interfaces;
+        this.superInterfaces = interfaces;
         hasExplicitConstructor = false;
         instanceFieldInitializations = new ArrayList<>();
         staticFieldInitializations = new ArrayList<>();

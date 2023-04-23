@@ -202,7 +202,7 @@ public class Parser {
         mustBe(IDENTIFIER);
         String name = scanner.previousToken().image();
         Type superClass;
-        ArrayList<Type> interfaces = new ArrayList<>();
+        ArrayList<TypeName> interfaces = new ArrayList<>();
         if (have(EXTENDS)) {
             superClass = qualifiedIdentifier();
         } else {
@@ -433,14 +433,13 @@ public class Parser {
      *
      * @return an AST for a switch statement label.
      */
-    private JSwitchBlockStatement switchBlockStatementGroup() {
-        int line = scanner.token().line();
+    private SwitchStatementGroup switchBlockStatementGroup() {
         ArrayList<JExpression> labels = new ArrayList<>();
         ArrayList<JStatement> blockStatements = new ArrayList<>();
         labels.add(switchLabel());
         while (see(CASE) || see(DEFAULT)) labels.add(switchLabel());
         while ((!see(CASE)) && (!see(DEFAULT) && (!see(RCURLY)))) blockStatements.add(blockStatement());
-        return new JSwitchBlockStatement(line, labels, blockStatements);
+        return new SwitchStatementGroup(labels, blockStatements);
     }
 
     // Project 3 Problem 4
@@ -502,19 +501,24 @@ public class Parser {
         }
         // Project 3 Problem 5
         else if (have(FOR)) {
-            ArrayList<JStatement> forInit = new ArrayList<>();
-            ArrayList<JStatement> forUpdate = new ArrayList<>();
-            JExpression condition = null;
-            JStatement body;
             mustBe(LPAREN);
-            if (!see(SEMI)) forInit(line);
+            ArrayList<JStatement> init = null;
+            if (!see(SEMI)) {
+                init = forInit();
+            }
             mustBe(SEMI);
-            if (!see(SEMI)) condition = expression();
+            JExpression condition = null;
+            if (!see(SEMI)) {
+                condition = expression();
+            }
             mustBe(SEMI);
-            if (!see(RPAREN)) forUpdate = forUpdate(line);
+            ArrayList<JStatement> update = null;
+            if (!see(RPAREN)) {
+                update = forUpdate();
+            }
             mustBe(RPAREN);
-            body = statement();
-            return new JForStatement(line, forInit, condition, forUpdate, body);
+            JStatement body = statement();
+            return new JForStatement(line, init, condition, update, body);
         }
         // Project 3 Problem 6
         else if (have(BREAK)) {
@@ -528,14 +532,14 @@ public class Parser {
         }
         // Project 3 Problem 8
         else if (have(SWITCH)) {
-            ArrayList<JSwitchBlockStatement> switchBlockStatementGroup = new ArrayList<>();
+            ArrayList<SwitchStatementGroup> switchStGroup = new ArrayList<>();
             JExpression parExpression = parExpression();
             mustBe(LCURLY);
             while (!see(RCURLY) && !see(EOF)) {
-                switchBlockStatementGroup.add(switchBlockStatementGroup());
+                switchStGroup.add(switchBlockStatementGroup());
             }
             mustBe(RCURLY);
-            return new JSwitchStatement(line, parExpression, switchBlockStatementGroup);
+            return new JSwitchStatement(line, parExpression, switchStGroup);
         }
         // Project 3 Problem 9
         else if (have(TRY)) {
@@ -637,6 +641,7 @@ public class Parser {
         mustBe(RPAREN);
         return expr;
     }
+
     // Project 3 Problem 5
     /**
      *
@@ -648,14 +653,18 @@ public class Parser {
      *
      * @return an ArrayList of formal parameters.
      */
-    private ArrayList<JStatement> forInit(int line) {
+    private ArrayList forInit(){ // captures values and variables for initialization of a for loop
         ArrayList<JStatement> init = new ArrayList<>();
-        if(seeBasicType() || seeReferenceType()) {
-            Type type = null;
-            init.add(new JVariableDeclaration(line, variableDeclarators(type())));
-        } else {
-            init.add(statementExpression());
-            while (have(COMMA)) init.add(statementExpression());
+        ArrayList<JVariableDeclaration> variables = new ArrayList<>();
+        int line = scanner.token().line();
+        if(seeLocalVariableDeclaration() == true){
+            Type type = type();
+            variables.add(new JVariableDeclaration(line, variableDeclarators(type)));
+            return variables;
+        } else{
+            do {
+                init.add(new JStatementExpression(line, expression()));
+            } while (have(COMMA));
         }
         return init;
     }
@@ -669,7 +678,7 @@ public class Parser {
      *
      * @return an ArrayList of formal parameters.
      */
-    private ArrayList<JStatement> forUpdate(int line) {
+    private ArrayList<JStatement> forUpdate() {
         ArrayList<JStatement> update = new ArrayList<>();
         update.add(statementExpression());
         while(have(COMMA)) update.add(statementExpression());
@@ -906,7 +915,6 @@ public class Parser {
     }
 
     // Project 3 Problem 2
-
     /**
      * Parses an assignment expression and returns an AST for it.
      *
@@ -976,7 +984,6 @@ public class Parser {
     }
 
     // Project 3 Problem 2
-
     /**
      * Parses a conditional-or expression and returns an AST for it.
      *
@@ -999,8 +1006,8 @@ public class Parser {
         }
         return lhs;
     }
-    // Project 3 Problem 3
 
+    // Project 3 Problem 3
     /**
      * Parses a conditional expression and returns an AST for it.
      *
@@ -1119,7 +1126,6 @@ public class Parser {
     }
 
     // Project 3 Problem 2
-
     /**
      * Parses an equality expression and returns an AST for it.
      *
@@ -1146,7 +1152,6 @@ public class Parser {
     }
 
     // Project 3 Problem 2
-
     /**
      * Parses a relational expression and returns an AST for it.
      *
@@ -1284,7 +1289,6 @@ public class Parser {
     }
 
     // Project 3 Problem 2
-
     /**
      * Parses a postfix expression and returns an AST for it.
      *
@@ -1685,54 +1689,5 @@ public class Parser {
         boolean result = have(LBRACK) && see(RBRACK);
         scanner.returnToPosition();
         return result;
-    }
-}
-
-/**
- * A switch statement group consists of case labels and a block of statements.
- */
-class JSwitchBlockStatement extends JAST {
-
-    private ArrayList<JExpression> switchLabels;
-    private ArrayList<JStatement> blockStatements;
-
-    public JSwitchBlockStatement(int line, ArrayList<JExpression> switchLabels, ArrayList<JStatement> blockStatements) {
-        super(line);
-        this.switchLabels = switchLabels;
-        this.blockStatements = blockStatements;
-    }
-
-
-    /**
-     * {@inheritDoc}
-     */
-    public JAST analyze(Context context) {
-        return this;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void codegen(CLEmitter output) {
-
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void toJSON(JSONElement json) {
-
-        for (JExpression label : switchLabels) {
-            JSONElement e = new JSONElement();
-            if (label == null) {
-                json.addChild("Default", e);
-            } else {
-                json.addChild("Case", e);
-                label.toJSON(e);
-            }
-        }
-        blockStatements.forEach(block -> {
-            block.toJSON(json);
-        });
     }
 }
