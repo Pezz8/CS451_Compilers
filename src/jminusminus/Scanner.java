@@ -50,15 +50,27 @@ class Scanner {
         reserved = new Hashtable<String, TokenKind>();
         reserved.put(ABSTRACT.image(), ABSTRACT);
         reserved.put(BOOLEAN.image(), BOOLEAN);
+        reserved.put(BREAK.image(), BREAK);
+        reserved.put(CASE.image(), CASE);
+        reserved.put(CATCH.image(), CATCH);
         reserved.put(CHAR.image(), CHAR);
         reserved.put(CLASS.image(), CLASS);
+        reserved.put(CONTINUE.image(), CONTINUE);
+        reserved.put(DEFLT.image(), DEFLT);
+        reserved.put(DO.image(), DO);
+        reserved.put(DOUBLE.image(), DOUBLE);
         reserved.put(ELSE.image(), ELSE);
         reserved.put(EXTENDS.image(), EXTENDS);
         reserved.put(FALSE.image(), FALSE);
+        reserved.put(FINALLY.image(), FINALLY);
+        reserved.put(FOR.image(), FOR);
         reserved.put(IF.image(), IF);
+        reserved.put(IMPLEMENTS.image(), IMPLEMENTS);
         reserved.put(IMPORT.image(), IMPORT);
         reserved.put(INSTANCEOF.image(), INSTANCEOF);
         reserved.put(INT.image(), INT);
+        reserved.put(INTERFACE.image(), INTERFACE);
+        reserved.put(LONG.image(), LONG);
         reserved.put(NEW.image(), NEW);
         reserved.put(NULL.image(), NULL);
         reserved.put(PACKAGE.image(), PACKAGE);
@@ -68,28 +80,14 @@ class Scanner {
         reserved.put(RETURN.image(), RETURN);
         reserved.put(STATIC.image(), STATIC);
         reserved.put(SUPER.image(), SUPER);
-        reserved.put(THIS.image(), THIS);
-        reserved.put(TRUE.image(), TRUE);
-        reserved.put(VOID.image(), VOID);
-        reserved.put(WHILE.image(), WHILE);
-
-        // Project 2 Problem 3
-        reserved.put(BREAK.image(), BREAK);
-        reserved.put(CASE.image(), CASE);
-        reserved.put(CATCH.image(), CATCH);
-        reserved.put(CONTINUE.image(), CONTINUE);
-        reserved.put(DEFAULT.image(), DEFAULT);
-        reserved.put(DO.image(), DO);
-        reserved.put(DOUBLE.image(), DOUBLE);
-        reserved.put(FINALLY.image(), FINALLY);
-        reserved.put(FOR.image(), FOR);
-        reserved.put(IMPLEMENTS.image(), IMPLEMENTS);
-        reserved.put(INTERFACE.image(), INTERFACE);
-        reserved.put(LONG.image(), LONG);
         reserved.put(SWITCH.image(), SWITCH);
+        reserved.put(THIS.image(), THIS);
         reserved.put(THROW.image(), THROW);
         reserved.put(THROWS.image(), THROWS);
+        reserved.put(TRUE.image(), TRUE);
         reserved.put(TRY.image(), TRY);
+        reserved.put(VOID.image(), VOID);
+        reserved.put(WHILE.image(), WHILE);
 
         // Prime the pump.
         nextCh();
@@ -101,7 +99,6 @@ class Scanner {
      * @return the next scanned token.
      */
     public TokenInfo getNextToken() {
-        //System.out.println("GetNextToken call");
         StringBuffer buffer;
         boolean moreWhiteSpace = true;
         while (moreWhiteSpace) {
@@ -109,33 +106,38 @@ class Scanner {
                 nextCh();
             }
             if (ch == '/') {
-                //System.out.println("Test reading /");
                 nextCh();
-                if (ch == '/') {                            // COMMENT LINE
+                if (ch == '/') {
                     // CharReader maps all new lines to '\n'.
                     while (ch != '\n' && ch != EOFCH) {
                         nextCh();
                     }
                 } else if (ch == '*') {
-                    while (true){
-                        nextCh();
-                        if (ch == '*'){
+                    boolean inComment = true;
+                    int start = line;
+                    nextCh();
+                    char prv = ch;
+                    nextCh();
+                    while (inComment && ch != EOFCH) {
+                        if (prv == '*' && ch == '/') {
+                            inComment = false;
                             nextCh();
-                            if (ch == '/'){
-                                nextCh();
-                                break;
-                            }
+                            break;
                         }
+                        prv = ch;
+                        nextCh();
+                    }
+                    if (ch == EOFCH) {
+                        reportScannerError("Unending comment starting at " + start);
+                        return getNextToken();
                     }
                 } else if (ch == '=') {
                     nextCh();
-                    return new TokenInfo(DIV_ASSIGN, line); // DIV_ASSIGN
-                }
-                else {                                      // DIV
+                    return new TokenInfo(DIV_ASSIGN, line);
+                } else {
                     return new TokenInfo(DIV, line);
                 }
-            }
-            else {
+            } else {
                 moreWhiteSpace = false;
             }
         }
@@ -144,22 +146,6 @@ class Scanner {
             case ',':
                 nextCh();
                 return new TokenInfo(COMMA, line);
-            case '.':
-                nextCh();
-                if (isDigit(ch)){
-                    buffer = new StringBuffer();
-                    buffer.append('.');
-                    while (isDigit(ch) || isExponent(ch) || isPlusOrMinSign(ch)){
-                        buffer.append(ch);
-                        nextCh();
-                    }
-                    if (isSuffix(ch)){
-                        buffer.append(ch);
-                        nextCh();
-                    }
-                    return new TokenInfo(DOUBLE_LITERAL, buffer.toString(), line);
-                }
-                return new TokenInfo(DOT, line);
             case '[':
                 nextCh();
                 return new TokenInfo(LBRACK, line);
@@ -183,21 +169,20 @@ class Scanner {
                 return new TokenInfo(SEMI, line);
             case '*':
                 nextCh();
-                if (ch == '='){
+                if (ch == '=') {
                     nextCh();
                     return new TokenInfo(STAR_ASSIGN, line);
+                } else {
+                    return new TokenInfo(STAR, line);
                 }
-                return new TokenInfo(STAR, line);
-            case '/':
-                nextCh();
-                return new TokenInfo(DIV, line);
             case '%':
                 nextCh();
-                if (ch == '='){
+                if (ch == '=') {
                     nextCh();
                     return new TokenInfo(REM_ASSIGN, line);
+                } else {
+                    return new TokenInfo(REM, line);
                 }
-                return new TokenInfo(REM, line);
             case '+':
                 nextCh();
                 if (ch == '=') {
@@ -216,9 +201,9 @@ class Scanner {
                     return new TokenInfo(DEC, line);
                 } else if (ch == '=') {
                     nextCh();
-                    return new TokenInfo(MINUS_ASSIGN, line);           // MINUS ASSIGN
+                    return new TokenInfo(MINUS_ASSIGN, line);
                 } else {
-                    return new TokenInfo(MINUS, line);                  // MINUS
+                    return new TokenInfo(MINUS, line);
                 }
             case '=':
                 nextCh();
@@ -230,91 +215,91 @@ class Scanner {
                 }
             case '>':
                 nextCh();
-                if (ch == '>') {                            // Check for >>
+                if (ch == '>') {
                     nextCh();
-                    if (ch == '>') {                        // Check for >>>
+                    if (ch == '>') {
                         nextCh();
-                        if (ch == '=') {                    // Check for >>>=
+                        if (ch == '=') {
                             nextCh();
                             return new TokenInfo(LRSHIFT_ASSIGN, line);
                         } else {
                             return new TokenInfo(LRSHIFT, line);
                         }
-                    } else if (ch == '=') {                 // ARSHIFT_ASSIGN
+                    } else if (ch == '=') {
                         nextCh();
                         return new TokenInfo(ARSHIFT_ASSIGN, line);
                     } else {
                         return new TokenInfo(ARSHIFT, line);
                     }
-                } else if (ch == '=') {                     // Check for >=
+                } else if (ch == '=') {
                     nextCh();
-                    return new TokenInfo(GE, line);         // GE
-                }else {
+                    return new TokenInfo(GE, line);
+                } else {
                     return new TokenInfo(GT, line);
                 }
             case '<':
                 nextCh();
-                if (ch == '=') {
+                if (ch == '<') {
                     nextCh();
-                    return new TokenInfo(LE, line);
-                } else if (ch == '<'){                      // Check for <<
-                    nextCh();
-                    if (ch == '=') {                        // Check for <<=
-                        nextCh();                           // ALSHIFT_ASSIGN
+                    if (ch == '=') {
+                        nextCh();
                         return new TokenInfo(ALSHIFT_ASSIGN, line);
                     } else {
                         return new TokenInfo(ALSHIFT, line);
                     }
+                } else if (ch == '=') {
+                    nextCh();
+                    return new TokenInfo(LE, line);
                 } else {
                     return new TokenInfo(LT, line);
                 }
-            case '?':                                       // QUESTION
+            case '!':
                 nextCh();
-                return new TokenInfo(QUESTION, line);
-            case ':':                                       // COLON
-                nextCh();
-                return new TokenInfo(COLON, line);
-            case '!':                                       // LNOT
-                nextCh();
-                if (ch == '='){
+                if (ch == '=') {
                     nextCh();
-                    return new TokenInfo(NOT_EQUAL, line);  // NOT_EQUAL
+                    return new TokenInfo(NOT_EQUAL, line);
                 } else {
                     return new TokenInfo(LNOT, line);
                 }
-            case '~':                                       // NOT
+            case '~':
                 nextCh();
                 return new TokenInfo(NOT, line);
-            case '|':                                       // OR
+            case '|':
                 nextCh();
-                if (ch == '='){                             // Check for |=
+                if (ch == '|') {
                     nextCh();
-                    return new TokenInfo(OR_ASSIGN, line);  // OR_ASSIGN
-                } else if (ch == '|') {
+                    return new TokenInfo(LOR, line);
+                } else if (ch == '=') {
                     nextCh();
-                    return new TokenInfo(LOR, line);        // LOR
+                    return new TokenInfo(OR_ASSIGN, line);
                 } else {
-                    return new TokenInfo(OR, line);         // OR
+                    return new TokenInfo(OR, line);
                 }
-            case '^':                                       // XOR
+            case '^':
                 nextCh();
-                if (ch == '='){                             // Check for ^=
+                if (ch == '=') {
                     nextCh();
-                    return new TokenInfo(XOR_ASSIGN, line); // XOR_ASSIGN
+                    return new TokenInfo(XOR_ASSIGN, line);
                 } else {
                     return new TokenInfo(XOR, line);
                 }
-            case '&':                                       // AND
+            case '&':
                 nextCh();
-                if (ch == '&') {                            // LAND
+                if (ch == '&') {
                     nextCh();
                     return new TokenInfo(LAND, line);
-                } else if (ch == '=') {                     // Check for &=
+                } else if (ch == '=') {
                     nextCh();
-                    return new TokenInfo(AND_ASSIGN, line); // AND_ASSIGN
+                    return new TokenInfo(AND_ASSIGN, line);
                 } else {
                     return new TokenInfo(AND, line);
                 }
+            case '?':
+                nextCh();
+                return new TokenInfo(QUESTION, line);
+            case ':':
+                nextCh();
+                return new TokenInfo(COLON, line);
             case '\'':
                 buffer = new StringBuffer();
                 buffer.append('\'');
@@ -363,6 +348,7 @@ class Scanner {
                 return new TokenInfo(STRING_LITERAL, buffer.toString(), line);
             case EOFCH:
                 return new TokenInfo(EOF, line);
+            case '.':
             case '0':
             case '1':
             case '2':
@@ -374,61 +360,56 @@ class Scanner {
             case '8':
             case '9':
                 buffer = new StringBuffer();
-                while (isDigit(ch)) {
-                    buffer.append(ch);
-                    nextCh();
-                }
-                // Project 2 Problem 4
-                // Numbers ending in l or L ( 1l or 9L)
-                if (ch == 'l' || ch == 'L'){
-                    buffer.append(ch);
-                    nextCh();
-                    return new TokenInfo(LONG_LITERAL, buffer.toString(), line);
-                }
-                boolean exponentFlag = false;
-                boolean suffixFlag = false;
-                boolean signFlag = false;
-                boolean dotFlag = false;
-                while (isDigit(ch) || isExponent(ch) || isSuffix(ch)|| ch == '.' || isPlusOrMinSign(ch)){
-                    if (isExponent(ch)){
-                        if (exponentFlag == false){
-                            exponentFlag = true;
-                        }
-                        else {
-                            System.out.println("Error only one 'e' or 'E' per number");
-                        }
+                if (isDigit(ch)) {
+                    buffer.append(digits());
+                    if (ch != '.' && ch != 'd' && ch != 'D' && ch != 'e' && ch != 'E' &&
+                            ch != 'l' && ch != 'L') {
+                        return new TokenInfo(INT_LITERAL, buffer.toString(), line);
                     }
-                    else if (isPlusOrMinSign(ch)){
-                        if (signFlag == false){
-                            signFlag = true;
-                        }
-                        else {
-                            System.out.println("Error only one '+' or '-' per number");
-                        }
+                    TokenInfo token = suffix(buffer); // double, long, or null
+                    if (token != null) {
+                        return token;
                     }
-                    else if (isSuffix(ch)){
-                        if (suffixFlag == false){
-                            suffixFlag = true;
-                        }
-                        else {
-                            System.out.println("Error only one 'd' or 'D' per number");
-                        }
+                    if (ch == '.') {
+                        buffer.append(ch);
+                        nextCh();
                     }
-                    else if (ch == '.'){
-                        if (dotFlag == false){
-                            dotFlag = true;
-                        }
-                        else {
-                            System.out.println("Error only one '.' per number");
-                        }
-                    }
-                    buffer.append(ch);
-                    nextCh();
-                    if (isWhitespace(ch) && (exponentFlag == true || suffixFlag == true || signFlag == true || dotFlag == true)){
+                    buffer.append(digits());
+                    if (ch == 'd' || ch == 'D') {
+                        buffer.append(ch);
+                        nextCh();
                         return new TokenInfo(DOUBLE_LITERAL, buffer.toString(), line);
                     }
+                    if (ch == 'e' || ch == 'E') {
+                        buffer.append(exp());
+                        if (ch == 'd' || ch == 'D') {
+                            buffer.append(ch);
+                            nextCh();
+                            return new TokenInfo(DOUBLE_LITERAL, buffer.toString(), line);
+                        }
+                    }
+                    return new TokenInfo(DOUBLE_LITERAL, buffer.toString(), line);
                 }
-                return new TokenInfo(INT_LITERAL, buffer.toString(), line);
+                if (ch == '.') {
+                    buffer.append(ch);
+                    nextCh();
+                    if (!isDigit(ch)) {
+                        return new TokenInfo(DOT, line);
+                    }
+                    buffer.append(digits());
+                    if (ch == 'e' || ch == 'E') {
+                        buffer.append(exp());
+                    }
+                    if (ch == 'd' || ch == 'D') {
+                        buffer.append(ch);
+                        nextCh();
+                    }
+                    return new TokenInfo(DOUBLE_LITERAL, buffer.toString(), line);
+                }
+
+                // Shouldn't get here.
+                reportScannerError("Freak out!", ch);
+                return getNextToken();
             default:
                 if (isIdentifierStart(ch)) {
                     buffer = new StringBuffer();
@@ -526,18 +507,6 @@ class Scanner {
         return (c >= '0' && c <= '9');
     }
 
-    private boolean isSuffix(char c){
-        return (c == 'd' || c == 'D');
-    }
-
-    private boolean isExponent(char c){
-        return (c == 'e' || c == 'E');
-    }
-
-    private boolean isPlusOrMinSign(char c){
-        return (c == '+' || c == '-');
-    }
-
     // Returns true if the specified character is a whitespace, and false otherwise.
     private boolean isWhitespace(char c) {
         return (c == ' ' || c == '\t' || c == '\n' || c == '\f');
@@ -552,6 +521,52 @@ class Scanner {
     // otherwise.
     private boolean isIdentifierPart(char c) {
         return (isIdentifierStart(c) || isDigit(c));
+    }
+
+    // Scans and returns a string of digits (0-9).
+    private String digits() {
+        StringBuffer buffer = new StringBuffer();
+        while (isDigit(ch)) {
+            buffer.append(ch);
+            nextCh();
+        }
+        return buffer.toString();
+    }
+
+    // Scans and returns the exponent grammar rule.
+    //    EXPONENT       ::= ( "e" | "E" ) [ ( "+" | "-" ) ] DIGITS
+    private String exp() {
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(ch);
+        nextCh();
+        if (ch == '+' || ch == '-') {
+            buffer.append(ch);
+            nextCh();
+        }
+        String digits = digits();
+        buffer.append(digits);
+        if (digits.length() == 0) {
+            reportScannerError("malformed exponent " + buffer.toString());
+        }
+        return buffer.toString();
+    }
+
+    // Returns the TokenInfo object for the literal represented by the given buffer based on the
+    // suffix ("d" | "D") for doubles and ("l" | "L") for longs, or null.
+    private TokenInfo suffix(StringBuffer buffer) {
+        switch (ch) {
+            case 'd':
+            case 'D':
+                buffer.append(ch);
+                nextCh();
+                return new TokenInfo(DOUBLE_LITERAL, buffer.toString(), line);
+            case 'l':
+            case 'L':
+                buffer.append(ch);
+                nextCh();
+                return new TokenInfo(LONG_LITERAL, buffer.toString(), line);
+        }
+        return null;
     }
 }
 

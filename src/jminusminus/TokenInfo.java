@@ -11,30 +11,22 @@ enum TokenKind {
     EOF(""),
 
     // Reserved words.
-    ABSTRACT("abstract"), BOOLEAN("boolean"), CHAR("char"), CLASS("class"), ELSE("else"),
-    EXTENDS("extends"), IF("if"), IMPORT("import"), INSTANCEOF("instanceof"), INT("int"),
-    NEW("new"), PACKAGE("package"), PRIVATE("private"), PROTECTED("protected"),
-    PUBLIC("public"), RETURN("return"), STATIC("static"), SUPER("super"), THIS("this"),
-    VOID("void"), WHILE("while"),
-
-    // Project 2 Problem 3
-    BREAK ("break"), CASE ("case"), CATCH ("catch"), CONTINUE ("continue"), DEFAULT ("default"),
-    DO ("do"), DOUBLE ("double"), FINALLY ("finally"), FOR ("for"), IMPLEMENTS ("implements"),
-    INTERFACE ("interface"), LONG ("long"), SWITCH ("switch"), THROW ("throw"), THROWS ("throws"),
-    TRY ("try"),
+    ABSTRACT("abstract"), BOOLEAN("boolean"), BREAK("break"), CASE("case"), CATCH("catch"),
+    CLASS("class"), CONTINUE("continue"), DEFLT("default"), DO("do"), DOUBLE("double"),
+    ELSE("else"), EXTENDS("extends"), FINALLY("finally"), FOR("for"), CHAR("char"), IF("if"),
+    IMPLEMENTS("implements"), IMPORT("import"), INSTANCEOF("instanceof"), INT("int"),
+    INTERFACE("interface"), LONG("long"), NEW("new"), PACKAGE("package"), PRIVATE("private"),
+    PROTECTED("protected"), PUBLIC("public"), RETURN("return"), STATIC("static"), SUPER("super"),
+    SWITCH("switch"), THIS("this"), THROW("throw"), THROWS("throws"), TRY("try"), VOID("void"),
+    WHILE("while"),
 
     // Operators.
-    ASSIGN("="), DEC("--"), EQUAL("=="), GT(">"), INC("++"), LAND("&&"),
-    LE("<="), LNOT("!"), ARSHIFT(">>"), ALSHIFT("<<"), LRSHIFT(">>>"),
-    MINUS("-"), PLUS("+"), PLUS_ASSIGN("+="), STAR("*"), DIV("/"), REM("%"),
-    NOT ("~"), OR("|"), XOR("^"), AND ("&"),
-    // Project 2 Problem 2
-    QUESTION ("?") /*done*/, COLON (":") /*done*/, NOT_EQUAL ("!=") /*done*/, DIV_ASSIGN ("/="), MINUS_ASSIGN ("-="),
-    STAR_ASSIGN ("*="), REM_ASSIGN("%="), ARSHIFT_ASSIGN (">>="), LRSHIFT_ASSIGN (">>>="),
-    ALSHIFT_ASSIGN ("<<="), AND_ASSIGN("&="), XOR_ASSIGN ("^="), OR_ASSIGN ("|=") /*all the assign done*/,
-    LT ("<") /*done*/, GE (">=") /*done*/, LOR ("||") /*done*/,
-
-
+    ALSHIFT("<<"), ALSHIFT_ASSIGN("<<="), AND("&"), AND_ASSIGN("&="), ARSHIFT(">>"),
+    ARSHIFT_ASSIGN(">>="), ASSIGN("="), COLON(":"), DEC("--"), DIV("/"), DIV_ASSIGN("/="),
+    EQUAL("=="), GE(">="), GT(">"), INC("++"), LAND("&&"), LE("<="), LNOT("!"), LOR("||"),
+    LRSHIFT(">>>"), LRSHIFT_ASSIGN(">>>="), LT("<"), MINUS("-"), MINUS_ASSIGN("-="), NOT("~"),
+    NOT_EQUAL("!="), OR("|"), OR_ASSIGN("|="), PLUS("+"), PLUS_ASSIGN("+="), QUESTION("?"),
+    REM("%"), REM_ASSIGN("%="), STAR("*"), STAR_ASSIGN("*="), XOR("^"), XOR_ASSIGN("^="),
 
     // Separators.
     COMMA(","), DOT("."), LBRACK("["), LCURLY("{"), LPAREN("("), RBRACK("]"), RCURLY("}"),
@@ -44,9 +36,8 @@ enum TokenKind {
     IDENTIFIER("<IDENTIFIER>"),
 
     // Literals.
-    CHAR_LITERAL("<CHAR_LITERAL>"), FALSE("false"), INT_LITERAL("<INT_LITERAL>"), NULL("null"),
-    STRING_LITERAL("<STRING_LITERAL>"), TRUE("true"),
-    // Project 2 problem 4
+    NULL("null"), FALSE("false"), TRUE("true"), INT_LITERAL("<INT_LITERAL>"),
+    CHAR_LITERAL("<CHAR_LITERAL>"), STRING_LITERAL("<STRING_LITERAL>"),
     LONG_LITERAL("<LONG_LITERAL>"), DOUBLE_LITERAL("<DOUBLE_LITERAL>");
 
     // The token kind's string representation.
