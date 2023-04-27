@@ -75,11 +75,17 @@ class JReturnStatement extends JStatement {
             if (expr.type() == Type.INT || expr.type() == Type.BOOLEAN ||
                     expr.type() == Type.CHAR) {
                 output.addNoArgInstruction(IRETURN);
+                // Project 5 Problem 1
+            } else if (expr.type() == Type.LONG) {
+                output.addNoArgInstruction(LRETURN);
+            } else if (expr.type() == Type.DOUBLE) {
+                output.addNoArgInstruction(DRETURN);
             } else {
-                output.addNoArgInstruction(ARETURN);
+                    output.addNoArgInstruction(ARETURN);
+                }
             }
         }
-    }
+
 
     /**
      * {@inheritDoc}

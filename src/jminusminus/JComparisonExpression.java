@@ -26,8 +26,17 @@ abstract class JComparisonExpression extends JBooleanBinaryExpression {
     public JExpression analyze(Context context) {
         lhs = (JExpression) lhs.analyze(context);
         rhs = (JExpression) rhs.analyze(context);
-        lhs.type().mustMatchExpected(line(), Type.INT);
-        rhs.type().mustMatchExpected(line(), lhs.type());
+        // Project 5 Problem 2
+        if (lhs.type() == Type.INT) {
+            lhs.type().mustMatchExpected(line(), Type.INT);
+            rhs.type().mustMatchExpected(line(), lhs.type());
+        } else if (lhs.type() == Type.DOUBLE) {
+            lhs.type().mustMatchExpected(line(), Type.DOUBLE);
+            rhs.type().mustMatchExpected(line(), lhs.type());
+        } else if (lhs.type() == Type.LONG) {
+            lhs.type().mustMatchExpected(line(), Type.LONG);
+            rhs.type().mustMatchExpected(line(), lhs.type());
+        }
         type = Type.BOOLEAN;
         return this;
     }
@@ -104,7 +113,10 @@ class JGreaterEqualOp extends JComparisonExpression {
      * {@inheritDoc}
      */
     public void codegen(CLEmitter output, String targetLabel, boolean onTrue) {
-        // TODO
+        // Project 5 Problem 2
+        lhs.codegen(output);
+        rhs.codegen(output);
+        output.addBranchInstruction(onTrue ? IF_ICMPGE : IF_ICMPLT, targetLabel);
     }
 }
 
@@ -127,6 +139,9 @@ class JLessThanOp extends JComparisonExpression {
      * {@inheritDoc}
      */
     public void codegen(CLEmitter output, String targetLabel, boolean onTrue) {
-        // TODO
+        // Project 5 Problem 2
+        lhs.codegen(output);
+        rhs.codegen(output);
+        output.addBranchInstruction(onTrue ? IF_ICMPLT : IF_ICMPGE, targetLabel);
     }
 }

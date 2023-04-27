@@ -111,8 +111,14 @@ class JNegateOp extends JUnaryExpression {
      */
     public JExpression analyze(Context context) {
         operand = operand.analyze(context);
-        operand.type().mustMatchExpected(line(), Type.INT);
-        type = Type.INT;
+        // Project 5 Problem 2
+        if (operand.type() == Type.INT) {
+            type = Type.INT;
+        } else if (operand.type == Type.DOUBLE) {
+            type = Type.DOUBLE;
+        } else if (operand.type == Type.LONG) {
+            type = Type.LONG;
+        }
         return this;
     }
 
@@ -121,7 +127,14 @@ class JNegateOp extends JUnaryExpression {
      */
     public void codegen(CLEmitter output) {
         operand.codegen(output);
-        output.addNoArgInstruction(INEG);
+        // Project 5 Problem 2
+        if (type == Type.INT) {
+            output.addNoArgInstruction(INEG);
+        } else if (type == Type.DOUBLE) {
+            output.addNoArgInstruction(DNEG);
+        } else if (type == Type.LONG) {
+            output.addNoArgInstruction(LNEG);
+        }
     }
 }
 
@@ -256,8 +269,16 @@ class JUnaryPlusOp extends JUnaryExpression {
      */
     public JExpression analyze(Context context) {
         operand = operand.analyze(context);
-        operand.type().mustMatchExpected(line(), Type.INT);
-        type = Type.INT;
+//        operand.type().mustMatchExpected(line(), Type.INT);
+//        type = Type.INT;
+        // Project 5 Problem 2
+        if (operand.type() == Type.INT) {
+            type = Type.INT;
+        } else if (operand.type() == Type.DOUBLE) {
+            type = Type.DOUBLE;
+        } else if (operand.type() == Type.LONG) {
+            type = Type.LONG;
+        }
         return this;
     }
 
@@ -323,7 +344,23 @@ class JPostIncrementOp extends JUnaryExpression {
      * {@inheritDoc}
      */
     public JExpression analyze(Context context) {
-        // TODO
+        // Project 5 Problem 2
+        if (!(operand instanceof JLhs)) {
+            JAST.compilationUnit.reportSemanticError(line, "Operand to ++ must have a Left Value.");
+            type = Type.ANY;
+        } else {
+            operand = operand.analyze(context);
+            if (operand.type() == Type.INT) {
+                type = Type.INT;
+            } else if (operand.type() == Type.DOUBLE) {
+                type = Type.DOUBLE;
+            } else if (operand.type() == Type.LONG) {
+                type = Type.LONG;
+            } else {
+                type = Type.ANY;
+                JAST.compilationUnit.reportSemanticError(line(), "Invalid Operand Type");
+            }
+        }
         return this;
     }
 
@@ -331,7 +368,31 @@ class JPostIncrementOp extends JUnaryExpression {
      * {@inheritDoc}
      */
     public void codegen(CLEmitter output) {
-        // TODO
+        // Project 5 Problem 2
+        if (operand instanceof JVariable) {
+            int offset = ((LocalVariableDefn) ((JVariable) operand).iDefn()).offset();
+            if (!isStatementExpression) {
+                operand.codegen(output);
+            }
+            output.addIINCInstruction(offset, 1);
+        } else {
+            ((JLhs) operand).codegenLoadLhsLvalue(output);
+            ((JLhs) operand).codegenLoadLhsRvalue(output);
+            if (!isStatementExpression) {
+                ((JLhs) operand).codegenDuplicateRvalue(output);
+            }
+            if (type == Type.INT) {
+                output.addNoArgInstruction(ICONST_1);
+                output.addNoArgInstruction(IADD);
+            } else if (type == Type.LONG) {
+                output.addNoArgInstruction(LCONST_1);
+                output.addNoArgInstruction(LADD);
+            } else if (type == Type.DOUBLE) {
+                output.addNoArgInstruction(DCONST_1);
+                output.addNoArgInstruction(DADD);
+            }
+            ((JLhs) operand).codegenStore(output);
+        }
     }
 }
 
@@ -353,7 +414,24 @@ class JPreDecrementOp extends JUnaryExpression {
      * {@inheritDoc}
      */
     public JExpression analyze(Context context) {
-        // TODO
+        // Project 5 Problem 2
+        if (!(operand instanceof JLhs)) {
+            JAST.compilationUnit.reportSemanticError(line, "Operand to -- must have an Left Value.");
+            type = Type.ANY;
+        } else {
+            operand = operand.analyze(context);
+            if (operand.type() == Type.INT) {
+                type = Type.INT;
+            } else if (operand.type() == Type.LONG) {
+                type = Type.LONG;
+            } else if (operand.type() == Type.DOUBLE) {
+                type = Type.DOUBLE;
+            } else {
+                type = Type.ANY;
+                JAST.compilationUnit.reportSemanticError(line(),
+                        "Invalid Operand Type");
+            }
+        }
         return this;
     }
 
@@ -361,6 +439,30 @@ class JPreDecrementOp extends JUnaryExpression {
      * {@inheritDoc}
      */
     public void codegen(CLEmitter output) {
-        // TODO
+        // Project 5 Problem 2
+        if (operand instanceof JVariable) {
+            int offset = ((LocalVariableDefn) ((JVariable) operand).iDefn()).offset();
+            output.addIINCInstruction(offset, -1);
+            if (!isStatementExpression) {
+                operand.codegen(output);
+            }
+        } else {
+            ((JLhs) operand).codegenLoadLhsLvalue(output);
+            ((JLhs) operand).codegenLoadLhsRvalue(output);
+            if (type == Type.INT) {
+                output.addNoArgInstruction(ICONST_1);
+                output.addNoArgInstruction(ISUB);
+            } else if (type == Type.DOUBLE) {
+                output.addNoArgInstruction(DCONST_1);
+                output.addNoArgInstruction(DSUB);
+            } else if (type == Type.LONG) {
+                output.addNoArgInstruction(LCONST_1);
+                output.addNoArgInstruction(LSUB);
+            }
+            if (!isStatementExpression) {
+                ((JLhs) operand).codegenDuplicateRvalue(output);
+            }
+            ((JLhs) operand).codegenStore(output);
+        }
     }
 }

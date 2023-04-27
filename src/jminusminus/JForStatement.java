@@ -22,6 +22,9 @@ class JForStatement extends JStatement {
     // The body.
     private JStatement body;
 
+    public String breakLabel;
+    public String continueLabel;
+
     /**
      * Constructs an AST node for a for-statement.
      *
@@ -44,7 +47,26 @@ class JForStatement extends JStatement {
      * {@inheritDoc}
      */
     public JForStatement analyze(Context context) {
-        // TODO
+        // Project 5 Problem 6
+        LocalContext localContext = new LocalContext(context);
+        ArrayList<JStatement> analyzedInits = new ArrayList<>();
+        if (init != null) {
+            for (JStatement i : init) {
+                i = (JStatement) i.analyze(localContext);
+                analyzedInits.add(i);
+            }
+        }
+        this.init = analyzedInits;
+        if (condition != null) condition = condition.analyze(localContext);
+        ArrayList<JStatement> analyzedUpdates = new ArrayList<>();
+        if (update != null) {
+            for (JStatement u : update) {
+                u = (JStatement) u.analyze(localContext);
+                analyzedUpdates.add(u);
+            }
+        }
+        this.update = analyzedUpdates;
+        body = (JStatement) body.analyze(localContext);
         return this;
     }
 
@@ -52,7 +74,26 @@ class JForStatement extends JStatement {
      * {@inheritDoc}
      */
     public void codegen(CLEmitter output) {
-        // TODO
+        // Project 5 Problem 6
+        String conditionLabel = output.createLabel();
+        this.breakLabel = output.createLabel();
+        this.continueLabel = output.createLabel();
+        if(init != null) {
+            for (JStatement i : init) {
+                i.codegen(output);
+            }
+        }
+        output.addLabel(conditionLabel);
+        if(condition != null) condition.codegen(output, breakLabel, false);
+        if(body != null) body.codegen(output);
+        output.addLabel(continueLabel);
+        if(update != null) {
+            for (JStatement u : update) {
+                u.codegen(output);
+            }
+        }
+        output.addBranchInstruction(GOTO, conditionLabel);
+        output.addLabel(breakLabel);
     }
 
     /**

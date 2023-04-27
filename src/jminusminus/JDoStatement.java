@@ -14,6 +14,9 @@ public class JDoStatement extends JStatement {
     // Test expression.
     private JExpression condition;
 
+    public String continueLabel;
+    public String breakLabel;
+
     /**
      * Constructs an AST node for a do-statement.
      *
@@ -27,11 +30,15 @@ public class JDoStatement extends JStatement {
         this.condition = condition;
     }
 
+
     /**
      * {@inheritDoc}
      */
     public JStatement analyze(Context context) {
-        // TODO
+        // Project 5 Problem 5
+        condition = condition.analyze(context);
+        condition.type().mustMatchExpected(line(), Type.BOOLEAN);
+        body = (JStatement) body.analyze(context);
         return this;
     }
 
@@ -39,7 +46,13 @@ public class JDoStatement extends JStatement {
      * {@inheritDoc}
      */
     public void codegen(CLEmitter output) {
-        // TODO
+        // Project 5 Problem 5
+        continueLabel = output.createLabel();
+        breakLabel = output.createLabel();
+        output.addLabel(continueLabel);
+        body.codegen(output);
+        condition.codegen(output, continueLabel, true);
+        output.addLabel(breakLabel);
     }
 
     /**
